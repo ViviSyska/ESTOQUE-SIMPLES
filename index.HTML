@@ -407,48 +407,70 @@
         fecharModal('modalPed'); salvar();
     }
 
-    function gerarNotaPDF(p) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const vNome = document.getElementById('v-nome').value;
-        const vCpf = document.getElementById('v-cpf').value;
-        const pCpf = document.getElementById('p-cpf').value;
+   function gerarNotaPDF(p) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const vNome = document.getElementById('v-nome').value || "Não informado";
+    const vCpf = document.getElementById('v-cpf').value || "-";
+    const pCpf = document.getElementById('p-cpf').value || "-";
 
-        doc.setFontSize(22); doc.text("RECIBO DE VENDA", 105, 20, {align: "center"});
-        doc.setFontSize(10); doc.text(`Emissão: ${new Date().toLocaleString()}`, 10, 30);
-        
-        doc.line(10, 35, 200, 35);
-        doc.text(`VENDEDOR: ${vNome}`, 10, 45);
-        doc.text(`CPF: ${vCpf}`, 10, 50);
-        doc.text(`CLIENTE: ${p.clienteNome}`, 105, 45);
-        doc.text(`CPF PAGADOR: ${pCpf}`, 105, 50);
-        doc.line(10, 55, 200, 55);
+    // Cabeçalho Estilizado
+    doc.setFillColor(225, 29, 72); // Cor do seu app (#e11d48)
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.text("RECIBO DE VENDA", 105, 25, {align: "center"});
+    
+    // Dados do Emissor e Cliente
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("EMISSOR (VENDEDOR):", 10, 50);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${vNome} | CPF: ${vCpf}`, 10, 55);
 
-        let y = 65;
-        doc.setFont("helvetica", "bold");
-        doc.text("ITEM", 15, y); doc.text("QTD", 120, y); doc.text("UNIT", 150, y); doc.text("TOTAL", 180, y);
-        doc.setFont("helvetica", "normal");
-        y += 10;
+    doc.setFont("helvetica", "bold");
+    doc.text("CLIENTE (PAGADOR):", 120, 50);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${p.clienteNome} | CPF: ${pCpf}`, 120, 55);
 
-        p.itens.forEach(it => {
-            doc.text(it.nome, 15, y);
-            doc.text(it.qtd.toString(), 120, y);
-            doc.text(it.preco.toFixed(2), 150, y);
-            doc.text((it.preco * it.qtd).toFixed(2), 180, y);
-            y += 8;
-        });
+    doc.line(10, 60, 200, 60);
 
-        doc.line(10, y, 200, y); y += 10;
-        doc.setFontSize(14); doc.text(`VALOR TOTAL BRUTO: R$ ${p.total.toFixed(2)}`, 200, y, {align: "right"});
-        
-        y += 40;
-        doc.line(60, y, 150, y);
-        doc.setFontSize(10);
-        doc.text(`Assinatura do Emissor: ${vNome}`, 105, y + 5, {align: "center"});
-        doc.text(`CPF: ${vCpf}`, 105, y + 10, {align: "center"});
+    // Tabela de Itens
+    let y = 70;
+    doc.setFillColor(240, 240, 240);
+    doc.rect(10, y-5, 190, 7, 'F');
+    doc.setFont("helvetica", "bold");
+    doc.text("DESCRIÇÃO DO PRODUTO", 15, y);
+    doc.text("QTD", 120, y);
+    doc.text("UNIT (R$)", 150, y);
+    doc.text("TOTAL (R$)", 180, y);
+    
+    y += 10;
+    doc.setFont("helvetica", "normal");
+    p.itens.forEach(it => {
+        doc.text(it.nome, 15, y);
+        doc.text(it.qtd.toString(), 125, y);
+        doc.text(it.preco.toFixed(2), 150, y);
+        doc.text((it.preco * it.qtd).toFixed(2), 180, y);
+        y += 8;
+        if(y > 270) { doc.addPage(); y = 20; }
+    });
 
-        doc.save(`Nota_${p.id}.pdf`);
-    }
+    // Fechamento
+    doc.line(10, y, 200, y);
+    y += 10;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(`VALOR TOTAL: R$ ${p.total.toFixed(2)}`, 200, y, {align: "right"});
+    
+    y += 30;
+    doc.line(60, y, 150, y);
+    doc.setFontSize(10);
+    doc.text("Assinatura do Responsável", 105, y + 5, {align: "center"});
+
+    doc.save(`Recibo_${p.clienteNome}_${p.id}.pdf`);
+}
 
     // --- PAGAMENTO ---
     function abrirPg(id) {
